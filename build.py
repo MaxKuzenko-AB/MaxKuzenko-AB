@@ -347,6 +347,12 @@ def art_groups():
     if run is not None:
         spans.append((run, ART_W))
     gaps = [spans[i + 1][0] - spans[i][1] for i in range(len(spans) - 1)]
+    # The apostrophe pair sits tighter in the source art than every other
+    # letter pair, which reads as a gap at this tracking rather than as a
+    # ligature. Lift anything below the standard letter gap up to it; the
+    # modal gap is that standard, and the wider word gaps are left alone.
+    letter_gap = max(set(gaps), key=gaps.count)
+    gaps = [max(g, letter_gap) for g in gaps]
     return spans, gaps
 
 

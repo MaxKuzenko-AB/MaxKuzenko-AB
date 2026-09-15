@@ -48,8 +48,11 @@ at `#fff9c0` and pulled it back to a bright yellow.
 **Letter size and total width are independent.** The art's glyphs are a fixed size in
 grid units, so widening the strip via `TITLE_W` makes each unit fewer screen pixels and
 the letters shrink. `title_pixels()` then splits the art back into its glyphs on blank
-columns and scales the original gaps in proportion to refill the width, so the tight `'S`
-pair and the wider word gaps keep their relationship rather than being re-derived. Raise
+columns and scales the gaps in proportion to refill the width, so the wider word gaps
+keep their relationship to the letter gaps rather than being re-derived. Any gap tighter
+than the modal letter gap is lifted up to it first — the apostrophe pair is set tighter in
+the source art, which reads as an accident rather than a ligature once the tracking opens
+up. Raise
 `TITLE_W` to shrink the letters further; lower it to grow them. Either way the text still
 spans the strip and lines up with the beach above.
 
