@@ -320,7 +320,7 @@ CAP_BOT = CAP_TOP + ART_H
 # size in grid units, so widening the strip makes each unit fewer screen pixels
 # and the letters shrink; the gaps are then scaled up to keep the text spanning
 # the full width. Raise TITLE_W to shrink the letters further.
-TITLE_W = 290
+TITLE_W = 580
 TITLE_H = CAP_BOT + CAP_TOP
 
 # Smooth fire ramp, top to bottom. Unlike chrome type there is no hard break:
