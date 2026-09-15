@@ -2,7 +2,7 @@
 
 <img src="./venice-beach.svg" alt="Animated 8-bit Venice Beach: swaying palms, rolling surf and drifting clouds" width="100%" />
 
-<img src="./title-max.svg" alt="Max's Git Page" width="100%" />
+<img src="./max-git-page.svg" alt="Max's Git Page" width="100%" />
 
 </div>
 
