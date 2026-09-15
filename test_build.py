@@ -12,7 +12,7 @@ import build
 
 def check_grids_rectangular():
     """A ragged row shears every row below it, often subtly."""
-    for name, mirror in (("skull", True), ("shades", False), ("fedora", True)):
+    for name, mirror in (("head", True), ("shades", False), ("fedora", True)):
         g = build.Grid.load(name, mirror)     # Grid.__init__ raises on ragged
         assert g.w > 0 and g.h > 0, name
     return "sprite grids rectangular"
@@ -21,7 +21,7 @@ def check_grids_rectangular():
 def check_palette_complete():
     """Grid.load raises on unmapped chars; assert nothing is unused either."""
     used = set()
-    for name, mirror in (("skull", True), ("shades", False), ("fedora", True)):
+    for name, mirror in (("head", True), ("shades", False), ("fedora", True)):
         used |= {c for r in build.Grid.load(name, mirror).rows for c in r if c != "."}
     for rects in build.build_scene().layers.values():
         used |= {r[4] for r in rects}

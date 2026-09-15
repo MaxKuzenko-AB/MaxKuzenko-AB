@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="./venice-terminator.svg" alt="8-bit chrome endoskeleton acquiring beachwear on Venice Beach" width="100%" />
+<img src="./venice-terminator.svg" alt="8-bit endoskeleton acquiring beachwear on Venice Beach" width="100%" />
 
 # Hi, I'm Max 👋
 
@@ -25,15 +25,29 @@
 
 `venice-terminator.svg` is generated, not hand-written. Run `python3 build.py > venice-terminator.svg`.
 
+**Machine, not skeleton.** The first version of the head was a bone skull with hollow
+sockets and bared teeth, and it read as horror. The fix was not to soften it but to
+rebuild it as hardware: machined plates with hard specular edges, a brow shelf, jaw
+tendons, and small red lens pupils sitting in shallow sockets instead of glowing bars
+floating in a void. Same menace, none of the death imagery.
+
 **Art sources.** Sprites where every pixel matters live in `art/*.txt` as ASCII grids —
 one character per pixel, `.` is transparent, characters map to hex through
-`palette.json`. `skull.txt` and `fedora.txt` are left halves only, mirrored at build
-time. Everything geometric (sky, sea, sand, palm trunks, fronds, the shirt) is drawn
-procedurally in `build.py`, because hand-typing a 160×90 grid is silly.
+`palette.json`. `head.txt` and `fedora.txt` are left halves only, mirrored at build
+time. Everything geometric (sky, sea, sand, palm trunks, fronds, shoulders, shirt) is
+drawn procedurally in `build.py`, because hand-typing a grid is silly. Shoulders and
+shirt share one half-width profile, so the shirt cannot drift off the body.
 
-**Output.** A 160×90 pixel grid in a `viewBox`, so it stays crisp at any width. Adjacent
-same-colour pixels are run-length merged into single `<rect>`s, which also resolves
-overdraw. ~3.1k rects.
+| Sprite | Size | Note |
+|---|---|---|
+| `art/head.txt` | 17×36 → 34×36 | mirrored |
+| `art/shades.txt` | 32×7 | not mirrored: the glint sits on one lens |
+| `art/fedora.txt` | 22×12 → 44×12 | mirrored |
+
+**Output.** A 160×45 letterbox grid in a `viewBox`, so it stays crisp at any width. The
+head fills the height and the beach sits in the side thirds. Adjacent same-colour pixels
+are run-length merged into single `<rect>`s, which also resolves overdraw. ~2.0k rects,
+88 KB.
 
 **Animation is pure CSS.** GitHub serves README images through a proxy and renders them
 in an `<img>`, so JavaScript never runs — only CSS and SMIL do. Every ambient loop uses
@@ -46,7 +60,7 @@ grid, and 8-bit games cut rather than zoom anyway.
 
 | Time | Beat |
 |---|---|
-| 0–2s | Black. Chrome skull at 2×, dim, optic pulsing |
+| 0–2s | Dark. Head at 2×, dim, optic pulsing |
 | 2–4s | Curtain wipes right; hard cut to 1×; figure lights up |
 | 4–5.5s | Sunglasses drop in |
 | 5.5–7s | Hawaiian shirt slides on |
@@ -67,6 +81,6 @@ actually exists. It does not assert the art looks right — that is settled by r
 and looking.
 
 **Tweaking.** Colours are all in `palette.json`. Shapes are ASCII: nudge a few characters
-in `art/shades.txt` and rebuild.
+in `art/head.txt` and rebuild.
 
 </details>

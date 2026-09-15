@@ -1,19 +1,14 @@
-# LEFT HALF ONLY - 26 wide x 16 tall, mirrored -> 52x16
-# crown rows 0-9 (J straw, Q shade, centre dent), band 10-11 (j),
-# brim 12-15 (widest at 13-14, q underside).
-.................qQJJJQQQQ
-................qQJJJJQQQQ
-...............qQJJJJJQQQQ
-..............qQJJJJJJQQQQ
-..............qQJJJJJJQQQQ
-.............qQJJJJJJJQQQQ
-.............qQJJJJJJJJJJJ
-............qQJJJJJJJJJJJJ
-............qQJJJJJJJJJJJJ
-...........qQJJJJJJJJJJJJJ
-...........qjjjjjjjjjjjjjj
-..........qjjjjjjjjjjjjjjj
-....qJJJJJJJJJJJJJJJJJJJJJ
-qQJJJJJJJJJJJJJJJJJJJJJJJJ
-qQQQQQQQQQQQQQQQQQQQQQQQQQ
-.....qqqqqqqqqqqqqqqqqqqqq
+# LEFT HALF ONLY - 22 wide x 12 tall, mirrored -> 44x12
+# crown 0-6, band 7-8 (j), brim 9-11 (widest at 10).
+...............qQJJJJJ
+..............qQJJJJJJ
+.............qQJJJJJJJ
+............qQJJJJJJJJ
+............qQJJJJJJJJ
+...........qQJJJJJJJJJ
+...........qQJJJJJJJJJ
+..........jjjjjjjjjjjj
+..........jjjjjjjjjjjj
+...qJJJJJJJJJJJJJJJJJJ
+qQJJJJJJJJJJJJJJJJJJJJ
+.....qqqqqqqqqqqqqqqqq
