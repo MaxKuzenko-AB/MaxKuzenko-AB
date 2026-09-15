@@ -1,10 +1,8 @@
 <div align="center">
 
-<img src="./title.svg" alt="Max's Git Page" width="100%" />
-
 <img src="./venice-beach.svg" alt="Animated 8-bit Venice Beach: swaying palms, rolling surf and drifting clouds" width="100%" />
 
-### :sunglasses: QE at AuditBoard. I break things on purpose, then make sure they stay broken-proof. :sunglasses:
+<img src="./title.svg" alt="Max's Git Page" width="100%" />
 
 </div>
 
@@ -30,29 +28,29 @@ python3 test_build.py                       # 7 structural checks
 **Gradient text cannot be done with CSS here.** GitHub strips `<style>` blocks and
 `style` attributes from README markdown, so the gradient has to live inside an SVG.
 
-**The typeface is baked to paths.** An SVG loaded through an `<img>` cannot fetch external
-fonts, so `font-family="Impact"` would only render as Impact for viewers who already have
-it — everyone else silently gets a fallback. So the glyphs were outlined once from Impact
-with `tools/outline.py` in a throwaway venv, and the resulting `<path>` data is committed
-as `title-glyphs.json` (12 glyphs, 4 KB). The repo needs no font files and no `fontTools`
-at build time, and the type renders identically everywhere.
+**The letterforms are hand-drawn pixels, not a font.** An SVG loaded through an `<img>`
+cannot fetch external fonts, so naming a typeface would only work for viewers who already
+have it installed. The glyphs are ASCII art in the `FONT` dict in `build.py`, on a 13x11
+grid with 3px strokes — ten of them, which is every distinct character in the title.
+Nothing to download, nothing to license, and the arcade look wants visible pixels anyway.
 
-To change the wording you need to re-outline, because only the glyphs in the current
-string are stored:
+Chamfered corners are what separate an arcade face from a plain blocky one. They are cut
+into the art on the corners that should have them. Deriving them programmatically, by
+removing every outer convex corner pixel, was tried first and failed badly: with 3px
+strokes it eats both ends of every stroke and every diagonal step, eroding the letters
+into fragments.
 
-```bash
-python3 -m venv /tmp/fv && /tmp/fv/bin/pip install fonttools
-/tmp/fv/bin/python tools/outline.py "NEW TITLE" 100 0.055 > /dev/null
-```
+The **outline is an 8-connected dilation of the ink**, computed at build time, so it wraps
+the letterforms exactly. Stroking the SVG instead would outline every individual `<rect>`
+and produce a grid of boxes.
 
-Only the outlines of a dozen letters are committed, not the font — the same thing any
-outlined logo does. Swap in a libre face if you want to be strict about it.
+The fire ramp runs dark red through orange to pale yellow across the cap height, as one
+`linearGradient` in `userSpaceOnUse` so the colour bands line up across every letter
+rather than restarting per glyph. Unlike chrome type there is no hard break — the
+continuous fall is the whole effect.
 
-**The chrome look is one trick: a hard horizontal break at the midline.** White → pale
-blue → navy on top, then an abrupt stop to near-black violet, brightening back to white
-at the foot. A smooth blue-to-violet ramp reads as a soft gradient, not as chrome. A
-white outline sits behind the fill via `paint-order="stroke"`, so the letters keep their
-full weight instead of being eaten into.
+To change the wording, edit `TITLE_TEXT` and add any missing glyph to `FONT`. A test
+fails if a character has no glyph.
 
 ## The beach
 

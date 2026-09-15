@@ -284,56 +284,107 @@ def render(sc, scale, animate=True):
 
 
 # ---------------------------------------------------------------- title
-# Glyph outlines were extracted from Impact once, in a throwaway venv, and
-# committed as path data. The repo therefore needs no font files and no
-# fontTools at build time, and the type renders identically for every viewer
-# regardless of which fonts they happen to have installed.
-TITLE = json.loads((ROOT / "title-glyphs.json").read_text())
-CAP = TITLE["cap"]
-# derive the box from the measured advance: hardcoding it let the type overflow
-TITLE_W = round(TITLE["advance"]) + 70
-TITLE_H = round(CAP) + 46
-BASELINE = round(CAP) + 22
+# Blocky arcade caps, hand-drawn on a 13x11 grid. Chamfered corners and
+# stepped diagonals are what make it read as a pixel font rather than a
+# condensed sans. Drawn rather than outlined from a real face, so there is no
+# font file, no build dependency, and nothing to license.
+FONT = {
+ "M": (".###.....###.", "####.....####", "#####...#####", "###.##.##.###",
+       "###..###..###", "###..###..###", "###.......###", "###.......###",
+       "###.......###", "###.......###", "###.......###"),
+ "A": ("...#######...", "..#########..", ".###.....###.", "###.......###",
+       "###.......###", "#############", "#############", "###.......###",
+       "###.......###", "###.......###", "###.......###"),
+ "X": ("###.......###", "###.......###", ".###.....###.", "..###...###..",
+       "...#######...", "....#####....", "...#######...", "..###...###..",
+       ".###.....###.", "###.......###", "###.......###"),
+ "S": (".###########.", "#############", "###..........", "###..........",
+       "###..........", "#############", "#############", "..........###",
+       "..........###", "#############", ".###########."),
+ "G": (".###########.", "#############", "###.......###", "###..........",
+       "###..........", "###...#######", "###...#######", "###.......###",
+       "###.......###", "#############", ".###########."),
+ "T": (".###########.", "#############", ".....###.....", ".....###.....",
+       ".....###.....", ".....###.....", ".....###.....", ".....###.....",
+       ".....###.....", ".....###.....", ".....###....."),
+ "P": (".###########.", "#############", "###.......###", "###.......###",
+       "#############", "############.", "###..........", "###..........",
+       "###..........", "###..........", "###.........."),
+ "E": (".###########.", "#############", "###..........", "###..........",
+       "###########..", "###########..", "###..........", "###..........",
+       "###..........", "#############", ".###########."),
+ "I": (".###.", "#####", "#####", "#####", "#####", "#####", "#####",
+       "#####", "#####", "#####", ".###."),
+ "'": (".###.", ".###.", ".###.", "..##.", ".....", ".....", ".....",
+       ".....", ".....", ".....", "....."),
+}
+TITLE_TEXT = "MAX'S GIT PAGE"
+GAP, SPACE_W, PAD = 3, 8, 8
+CAP_TOP = 3
+CAP_H = 11
+CAP_BOT = CAP_TOP + CAP_H
 
-# 80s chrome type: a hard horizontal break at the midline is the whole trick.
-# A smooth blue-to-violet ramp reads as a soft gradient, not as chrome.
-CHROME = (("0", "#ffffff"), ("8", "#eaf5ff"), ("26", "#7cc0f0"),
-          ("44", "#2f6fc4"), ("49", "#14418f"),
-          ("49.6", "#1a0f2e"),
-          ("58", "#3d2468"), ("74", "#7a58b4"), ("88", "#c3aee4"),
-          ("96", "#f2ecfb"), ("100", "#ffffff"))
+# Smooth fire ramp, top to bottom. Unlike chrome type there is no hard break:
+# the whole effect is the continuous maroon -> red -> orange -> yellow fall.
+FIRE = (("0", "#b02a14"), ("18", "#d9451a"), ("38", "#ef6a1e"),
+        ("56", "#fa9526"), ("74", "#ffc233"), ("89", "#ffe75a"),
+        ("100", "#fff9c0"))
+OUTLINE = "#0d1430"
 
 
-def stars(n=110):
-    """Deterministic scatter, so rebuilds are byte-identical."""
-    out, seed = [], 0xC0FFEE
-    for _ in range(n):
-        seed = (seed * 1103515245 + 12345) & 0x7FFFFFFF
-        x = (seed >> 6) % TITLE_W
-        seed = (seed * 1103515245 + 12345) & 0x7FFFFFFF
-        y = (seed >> 6) % TITLE_H
-        r = (1.4, 0.9, 0.6)[(seed >> 3) % 3]
-        o = (1.0, 0.65, 0.4)[(seed >> 5) % 3]
-        out.append(f'<circle cx="{x}" cy="{y}" r="{r}" opacity="{o}"/>')
-    return f'<g fill="#fff">{"".join(out)}</g>'
+def title_pixels():
+    """Lay the string out and return (ink, outline) pixel sets.
+    The outline is an 8-connected dilation of the ink, so it wraps the
+    letterforms exactly instead of stroking every individual rect."""
+    ink, x = set(), PAD
+    for ch in TITLE_TEXT:
+        if ch == " ":
+            x += SPACE_W
+            continue
+        rows = FONT[ch]
+        for dy, row in enumerate(rows):
+            for dx, c in enumerate(row):
+                if c == "#":
+                    ink.add((x + dx, CAP_TOP + dy))
+        x += len(rows[0]) + GAP
+    ring = {(px + dx, py + dy)
+            for px, py in ink for dx in (-1, 0, 1) for dy in (-1, 0, 1)}
+    return ink, ring - ink, x - GAP + PAD
 
 
-def render_title():
-    stops = "".join(f'<stop offset="{o}%" stop-color="{c}"/>' for o, c in CHROME)
-    dx = round((TITLE_W - TITLE["advance"]) / 2, 2)
-    paths = "".join(f'<path d="{g["d"]}"/>' for g in TITLE["glyphs"])
-    return (f'<svg xmlns="http://www.w3.org/2000/svg" '
-            f'viewBox="0 0 {TITLE_W} {TITLE_H}" width="{TITLE_W}" '
-            f'height="{TITLE_H}" role="img" aria-label="{TITLE["text"]}">'
-            f'<defs><linearGradient id="chrome" gradientUnits="userSpaceOnUse" '
-            f'x1="0" y1="{-CAP}" x2="0" y2="0">{stops}</linearGradient>'
-            f'</defs><rect width="{TITLE_W}" height="{TITLE_H}" fill="#04040a"/>'
-            f'{stars()}'
-            # paint-order puts the white stroke behind the fill, so the letters
-            # keep their full weight instead of being eaten into
-            f'<g transform="translate({dx},{BASELINE})" fill="url(#chrome)" '
-            f'stroke="#ffffff" stroke-width="7" stroke-linejoin="round" '
-            f'paint-order="stroke">{paths}</g></svg>')
+
+
+def rle(pixels, colour):
+    """Same row-wise run-length merge the beach uses."""
+    rows = {}
+    for x, y in pixels:
+        rows.setdefault(y, []).append(x)
+    out = []
+    for y in sorted(rows):
+        xs = sorted(rows[y])
+        start, n = xs[0], 1
+        for a, b in zip(xs, xs[1:]):
+            if b == a + 1:
+                n += 1
+            else:
+                out.append((start, y, n))
+                start, n = b, 1
+        out.append((start, y, n))
+    return "".join(f'<rect x="{x}" y="{y}" width="{w}" height="1"/>' for x, y, w in out)
+
+
+def render_title(scale=4):
+    ink, ring, tw = title_pixels()
+    th = CAP_BOT + CAP_TOP
+    stops = "".join(f'<stop offset="{o}%" stop-color="{c}"/>' for o, c in FIRE)
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {tw} {th}" '
+            f'width="{tw*scale}" height="{th*scale}" shape-rendering="crispEdges" '
+            f'role="img" aria-label="{TITLE_TEXT}">'
+            f'<defs><linearGradient id="fire" gradientUnits="userSpaceOnUse" '
+            f'x1="0" y1="{CAP_TOP}" x2="0" y2="{CAP_BOT}">{stops}</linearGradient>'
+            f'</defs><rect width="{tw}" height="{th}" fill="{OUTLINE}"/>'
+            f'<g fill="{OUTLINE}">{rle(ring, OUTLINE)}</g>'
+            f'<g fill="url(#fire)">{rle(ink, None)}</g></svg>')
 
 
 def build_scene():
@@ -351,8 +402,9 @@ def main():
     if a.title:
         out = render_title()
         print(out, end="")
-        print(f"title: {len(TITLE['glyphs'])} glyphs from {TITLE['font']}, "
-              f"{len(out)} bytes", file=sys.stderr)
+        ink, ring, tw = title_pixels()
+        print(f"title: {tw}x{CAP_BOT + CAP_TOP} grid, {len(ink)} ink px, "
+              f"{len(ring)} outline px, {len(out)} bytes", file=sys.stderr)
         return
     sc = build_scene()
     out = render(sc, a.scale, animate=not a.static)
