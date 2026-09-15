@@ -1,17 +1,11 @@
 <div align="center">
 
-<img src="./venice-terminator.svg" alt="8-bit endoskeleton acquiring beachwear on Venice Beach" width="100%" />
+<img src="./venice-beach.svg" alt="Animated 8-bit Venice Beach: swaying palms, rolling surf and drifting clouds" width="100%" />
 
 # Hi, I'm Max 👋
 
 ### QE at AuditBoard. I break things on purpose, then make sure they stay broken-proof.
 
-</div>
-
-<br>
-
-<div align="center">
-<sub>come with me if you want to ship 🕶️</sub>
 </div>
 
 <br>
@@ -23,64 +17,46 @@
 
 <br>
 
-`venice-terminator.svg` is generated, not hand-written. Run `python3 build.py > venice-terminator.svg`.
+`venice-beach.svg` is generated, not hand-written. Run `python3 build.py > venice-beach.svg`.
 
-**Machine, not skeleton.** The first version of the head was a bone skull with hollow
-sockets and bared teeth, and it read as horror. The fix was not to soften it but to
-rebuild it as hardware: machined plates with hard specular edges, a brow shelf, jaw
-tendons, and small red lens pupils sitting in shallow sockets instead of glowing bars
-floating in a void. Same menace, none of the death imagery.
+**Fully procedural.** There are no sprite files — the scene is pure geometry, drawn by
+`build.py` from a 20-colour `palette.json`. A 160×20 pixel grid in a `viewBox`, so it
+stays crisp at any width. Adjacent same-colour pixels are run-length merged into single
+`<rect>`s, which also resolves overdraw. 473 rects, 23 KB.
 
-**Art sources.** Sprites where every pixel matters live in `art/*.txt` as ASCII grids —
-one character per pixel, `.` is transparent, characters map to hex through
-`palette.json`. `head.txt` and `fedora.txt` are left halves only, mirrored at build
-time. Everything geometric (sky, sea, sand, palm trunks, fronds, shoulders, shirt) is
-drawn procedurally in `build.py`, because hand-typing a grid is silly. Shoulders and
-shirt share one half-width profile, so the shirt cannot drift off the body.
+**Nothing plays once.** Every animation is an infinite loop, so the banner never settles:
 
-| Sprite | Size | Note |
+| Element | Frames | Period |
 |---|---|---|
-| `art/head.txt` | 17×36 → 34×36 | mirrored |
-| `art/shades.txt` | 32×7 | not mirrored: the glint sits on one lens |
-| `art/fedora.txt` | 22×12 → 44×12 | mirrored |
+| Palm fronds, near tree | 4 | 1.2s |
+| Palm fronds, far tree | 4 | 1.5s |
+| Ocean crests | 4 | 0.5s |
+| Shoreline foam | 4 | 3.1s |
+| Cloud drift | scrolled | 40s |
 
-**Output.** A 160×45 letterbox grid in a `viewBox`, so it stays crisp at any width. The
-head fills the height and the beach sits in the side thirds. Adjacent same-colour pixels
-are run-length merged into single `<rect>`s, which also resolves overdraw. ~2.0k rects,
-88 KB.
+Periods are deliberately non-harmonic. Shared factors would make the whole scene visibly
+pulse in unison every few seconds.
 
 **Animation is pure CSS.** GitHub serves README images through a proxy and renders them
-in an `<img>`, so JavaScript never runs — only CSS and SMIL do. Every ambient loop uses
-`steps()` timing to swap discrete sprite frames, because interpolating pixel art puts
-pixels on half-coordinates and blurs the grid. The one continuous motion, the cloud
-scroll, is quantised with `steps(160)` so it advances exactly one grid pixel at a time.
+in an `<img>`, so JavaScript never runs — only CSS and SMIL do. Every loop uses `steps()`
+timing to swap discrete frames, because interpolating pixel art puts pixels on
+half-coordinates and blurs the grid. The one continuous motion, the cloud scroll, is
+quantised with `steps(160)` so it advances exactly one grid pixel at a time, and the
+cloud layer is tiled to twice the canvas width so the wrap is seamless.
 
-The camera cut is 2× → 1× in a single hard jump. Only integer factors preserve the pixel
-grid, and 8-bit games cut rather than zoom anyway.
+**Palm fronds** are sampled quadratic Bézier spines with thickness tapering from base to
+tip. Advancing one column per iteration and drawing vertical runs instead merges the
+blades into a flat mushroom cap. Swapping a `wind` offset across four frames animates the
+sway, and the offsets run back and forth (`-2, 0, +2, 0`) so the loop never snaps.
 
-| Time | Beat |
-|---|---|
-| 0–2s | Dark. Head at 2×, dim, optic pulsing |
-| 2–4s | Curtain wipes right; hard cut to 1×; figure lights up |
-| 4–5.5s | Sunglasses drop in |
-| 5.5–7s | Hawaiian shirt slides on |
-| 7–8.5s | Fedora drops |
-| 8.5s → | Hold. Five ambient loops keep running |
+**Checks.** `python3 test_build.py` verifies the palette is exact with no dead entries,
+the SVG parses, every `#id` the CSS animates exists, every animation is `infinite`, and
+no layer paints off-canvas. That last one is not theoretical — it caught a palm crown
+whose top frond was being clipped by the viewBox. None of them assert the art looks
+right; that is settled by rendering it and looking.
 
-One-shots run `iteration-count: 1` with `fill-mode: both`, so the final frame holds.
-Ambient loops (palm sway ×2 trees, ocean rollers, shoreline foam, cloud drift, optic
-glow) run `infinite` on deliberately non-harmonic periods — 1.2 / 1.5 / 0.5 / 3.1 / 1.8 /
-40 seconds. Shared factors would make the whole scene visibly pulse in unison.
-
-Because the timeline restarts whenever the image loads, the transformation replays once
-per page view.
-
-**Checks.** `python3 test_build.py` verifies the sprite grids are rectangular, the
-palette is exact with no dead entries, the SVG parses, and every `#id` the CSS animates
-actually exists. It does not assert the art looks right — that is settled by rendering it
-and looking.
-
-**Tweaking.** Colours are all in `palette.json`. Shapes are ASCII: nudge a few characters
-in `art/head.txt` and rebuild.
+**Tweaking.** Colours are all in `palette.json`. Geometry is constants near the top of
+`build.py`: `W`/`H` for the canvas, `HORIZON`/`SHORE`/`SAND` for the bands, `TREES` for
+palm placement.
 
 </details>
