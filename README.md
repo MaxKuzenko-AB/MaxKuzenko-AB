@@ -2,9 +2,7 @@
 
 <img src="./venice-beach.svg" alt="Animated 8-bit Venice Beach: swaying palms, rolling surf and drifting clouds" width="100%" />
 
-# Hi, I'm Max 👋
-
-### QE at AuditBoard. I break things on purpose, then make sure they stay broken-proof.
+# :sunglasses: Max's Git Page :sunglasses:
 
 </div>
 
