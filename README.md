@@ -2,7 +2,7 @@
 
 <img src="./venice-beach.svg" alt="Animated 8-bit Venice Beach: swaying palms, rolling surf and drifting clouds" width="100%" />
 
-# :sunglasses: Max's Git Page :sunglasses:
+# :sunglasses:  Max's Git Page  :sunglasses:
 
 </div>
 
@@ -26,11 +26,11 @@ stays crisp at any width. Adjacent same-colour pixels are run-length merged into
 
 | Element | Frames | Period |
 |---|---|---|
-| Palm fronds, near tree | 4 | 1.2s |
-| Palm fronds, far tree | 4 | 1.5s |
-| Ocean crests | 4 | 0.5s |
+| Palm fronds, near tree | 4 | 2s |
+| Palm fronds, far tree | 4 | 2.5s |
+| Ocean crests | 4 | 1.5s |
 | Shoreline foam | 4 | 3.1s |
-| Cloud drift | scrolled | 40s |
+| Cloud drift | scrolled | 1.5s |
 
 Periods are deliberately non-harmonic. Shared factors would make the whole scene visibly
 pulse in unison every few seconds.
