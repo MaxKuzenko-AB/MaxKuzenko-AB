@@ -319,13 +319,18 @@ FONT = {
        ".....", ".....", ".....", "....."),
 }
 TITLE_TEXT = "MAX'S GIT PAGE"
-GAP, SPACE_W = 3, 8
+# Airy tracking: small glyphs spread across the strip, rather than everything
+# scaled down together. The apostrophe hugs its neighbours instead.
+GAP, SPACE_W, TIGHT = 16, 24, 2
 CAP_TOP = 3
 CAP_H = 11
 CAP_BOT = CAP_TOP + CAP_H
-# Same 320-unit grid as the beach, so both images render at an identical pixel
-# size and the letters take up less of the strip than they did at 205.
-TITLE_W = W
+# The strip always renders at 100% of the README column, so letter size is set
+# purely by how many grid units wide the viewBox is: more units means each unit
+# is fewer screen pixels, so the glyphs shrink. Raise TITLE_W to shrink them
+# further, lower it to grow them. At 460 the text occupies about 40% of the
+# width and the caps land near 22px on a ~880px column.
+TITLE_W = 460
 TITLE_H = CAP_BOT + CAP_TOP
 
 # Smooth fire ramp, top to bottom. Unlike chrome type there is no hard break:
@@ -337,11 +342,20 @@ OUTLINE = "#000000"
 TITLE_BG = "none"       # transparent: blends into either GitHub theme
 
 
+def gap_after(i):
+    """Tracking between glyph i and the next. The apostrophe is set tight on
+    both sides so MAX'S reads as one word."""
+    nxt = TITLE_TEXT[i + 1] if i + 1 < len(TITLE_TEXT) else ""
+    if TITLE_TEXT[i] == "'" or nxt == "'":
+        return TIGHT
+    return GAP
+
+
 def text_width():
     w = 0
-    for ch in TITLE_TEXT:
-        w += SPACE_W if ch == " " else len(FONT[ch][0]) + GAP
-    return w - GAP
+    for i, ch in enumerate(TITLE_TEXT):
+        w += SPACE_W if ch == " " else len(FONT[ch][0]) + gap_after(i)
+    return w - gap_after(len(TITLE_TEXT) - 1)
 
 
 def title_pixels():
@@ -350,7 +364,7 @@ def title_pixels():
     letterforms exactly instead of stroking every individual rect."""
     ink = set()
     x = (TITLE_W - text_width()) // 2
-    for ch in TITLE_TEXT:
+    for i, ch in enumerate(TITLE_TEXT):
         if ch == " ":
             x += SPACE_W
             continue
@@ -359,7 +373,7 @@ def title_pixels():
             for dx, c in enumerate(row):
                 if c == "#":
                     ink.add((x + dx, CAP_TOP + dy))
-        x += len(rows[0]) + GAP
+        x += len(rows[0]) + gap_after(i)
     ring = {(px + dx, py + dy)
             for px, py in ink for dx in (-1, 0, 1) for dy in (-1, 0, 1)}
     return ink, ring - ink

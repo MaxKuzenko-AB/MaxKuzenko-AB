@@ -2,7 +2,7 @@
 
 <img src="./venice-beach.svg" alt="Animated 8-bit Venice Beach: swaying palms, rolling surf and drifting clouds" width="100%" />
 
-<img src="./title.svg" alt="Max's Git Page" width="100%" />
+<img src="./title-max.svg" alt="Max's Git Page" width="100%" />
 
 </div>
 
@@ -49,11 +49,20 @@ The fire ramp runs dark red through orange to pale yellow across the cap height,
 rather than restarting per glyph. Unlike chrome type there is no hard break — the
 continuous fall is the whole effect.
 
-The strip sits on the **same 320-unit grid as the beach**, so both images render at an
-identical pixel size and the text is centred in it rather than filling it. The background
-is transparent (`TITLE_BG = "none"`), so the strip blends into either GitHub theme rather
-than only the dark one. The black outline is what makes that work: it carries the letters
-against white as well as it does against `#0d1117`.
+The strip always renders at 100% of the README column, so **letter size is set purely by
+how many grid units wide the `viewBox` is**. More units means each unit is fewer screen
+pixels, so the glyphs shrink. `TITLE_W = 460` puts the text at roughly 40% of the width
+with caps near 22px on a typical column; lower it to grow the letters, raise it to shrink
+them further. No glyph redrawing involved.
+
+Tracking is separate from size: `GAP` sets the space between letters and `SPACE_W` the
+space between words, so the letters can stay small while the text still spans the strip.
+`TIGHT` overrides both around the apostrophe, so `MAX'S` reads as one word instead of
+three glyphs adrift.
+
+The background is transparent (`TITLE_BG = "none"`), so the strip blends into either
+GitHub theme rather than only the dark one. The black outline is what makes that work: it
+carries the letters against white as well as it does against a dark canvas.
 
 To change the wording, edit `TITLE_TEXT` and add any missing glyph to `FONT`. A test
 fails if a character has no glyph.
