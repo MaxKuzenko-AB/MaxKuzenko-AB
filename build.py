@@ -334,7 +334,7 @@ FIRE = (("0", "#b02a14"), ("18", "#d9451a"), ("38", "#ef6a1e"),
         ("56", "#fa9526"), ("74", "#ffc233"), ("89", "#ffe75a"),
         ("100", "#fff9c0"))
 OUTLINE = "#000000"
-TITLE_BG = "#0d1117"    # GitHub dark canvas
+TITLE_BG = "none"       # transparent: blends into either GitHub theme
 
 
 def text_width():

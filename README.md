@@ -50,10 +50,10 @@ rather than restarting per glyph. Unlike chrome type there is no hard break — 
 continuous fall is the whole effect.
 
 The strip sits on the **same 320-unit grid as the beach**, so both images render at an
-identical pixel size and the text is centred in it rather than filling it. Background is
-`#0d1117`, GitHub's dark canvas, so the strip edges disappear in dark mode. In light mode
-it stays a visible dark band — setting `TITLE_BG` to `none` would blend in both themes,
-since the black outline carries the letters against white too.
+identical pixel size and the text is centred in it rather than filling it. The background
+is transparent (`TITLE_BG = "none"`), so the strip blends into either GitHub theme rather
+than only the dark one. The black outline is what makes that work: it carries the letters
+against white as well as it does against `#0d1117`.
 
 To change the wording, edit `TITLE_TEXT` and add any missing glyph to `FONT`. A test
 fails if a character has no glyph.
