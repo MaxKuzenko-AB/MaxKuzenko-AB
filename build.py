@@ -319,24 +319,37 @@ FONT = {
        ".....", ".....", ".....", "....."),
 }
 TITLE_TEXT = "MAX'S GIT PAGE"
-GAP, SPACE_W, PAD = 3, 8, 8
+GAP, SPACE_W = 3, 8
 CAP_TOP = 3
 CAP_H = 11
 CAP_BOT = CAP_TOP + CAP_H
+# Same 320-unit grid as the beach, so both images render at an identical pixel
+# size and the letters take up less of the strip than they did at 205.
+TITLE_W = W
+TITLE_H = CAP_BOT + CAP_TOP
 
 # Smooth fire ramp, top to bottom. Unlike chrome type there is no hard break:
 # the whole effect is the continuous maroon -> red -> orange -> yellow fall.
 FIRE = (("0", "#b02a14"), ("18", "#d9451a"), ("38", "#ef6a1e"),
         ("56", "#fa9526"), ("74", "#ffc233"), ("89", "#ffe75a"),
         ("100", "#fff9c0"))
-OUTLINE = "#0d1430"
+OUTLINE = "#000000"
+TITLE_BG = "#0d1117"    # GitHub dark canvas
+
+
+def text_width():
+    w = 0
+    for ch in TITLE_TEXT:
+        w += SPACE_W if ch == " " else len(FONT[ch][0]) + GAP
+    return w - GAP
 
 
 def title_pixels():
-    """Lay the string out and return (ink, outline) pixel sets.
+    """Lay the string out centred and return (ink, outline) pixel sets.
     The outline is an 8-connected dilation of the ink, so it wraps the
     letterforms exactly instead of stroking every individual rect."""
-    ink, x = set(), PAD
+    ink = set()
+    x = (TITLE_W - text_width()) // 2
     for ch in TITLE_TEXT:
         if ch == " ":
             x += SPACE_W
@@ -349,7 +362,7 @@ def title_pixels():
         x += len(rows[0]) + GAP
     ring = {(px + dx, py + dy)
             for px, py in ink for dx in (-1, 0, 1) for dy in (-1, 0, 1)}
-    return ink, ring - ink, x - GAP + PAD
+    return ink, ring - ink
 
 
 
@@ -373,16 +386,16 @@ def rle(pixels, colour):
     return "".join(f'<rect x="{x}" y="{y}" width="{w}" height="1"/>' for x, y, w in out)
 
 
-def render_title(scale=4):
-    ink, ring, tw = title_pixels()
-    th = CAP_BOT + CAP_TOP
+def render_title(scale=3):
+    ink, ring = title_pixels()
+    tw, th = TITLE_W, TITLE_H
     stops = "".join(f'<stop offset="{o}%" stop-color="{c}"/>' for o, c in FIRE)
     return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {tw} {th}" '
             f'width="{tw*scale}" height="{th*scale}" shape-rendering="crispEdges" '
             f'role="img" aria-label="{TITLE_TEXT}">'
             f'<defs><linearGradient id="fire" gradientUnits="userSpaceOnUse" '
             f'x1="0" y1="{CAP_TOP}" x2="0" y2="{CAP_BOT}">{stops}</linearGradient>'
-            f'</defs><rect width="{tw}" height="{th}" fill="{OUTLINE}"/>'
+            f'</defs><rect width="{tw}" height="{th}" fill="{TITLE_BG}"/>'
             f'<g fill="{OUTLINE}">{rle(ring, OUTLINE)}</g>'
             f'<g fill="url(#fire)">{rle(ink, None)}</g></svg>')
 
@@ -402,9 +415,9 @@ def main():
     if a.title:
         out = render_title()
         print(out, end="")
-        ink, ring, tw = title_pixels()
-        print(f"title: {tw}x{CAP_BOT + CAP_TOP} grid, {len(ink)} ink px, "
-              f"{len(ring)} outline px, {len(out)} bytes", file=sys.stderr)
+        ink, ring = title_pixels()
+        print(f"title: {TITLE_W}x{TITLE_H} grid, text {text_width()} wide, "
+              f"{len(ink)} ink px, {len(out)} bytes", file=sys.stderr)
         return
     sc = build_scene()
     out = render(sc, a.scale, animate=not a.static)
