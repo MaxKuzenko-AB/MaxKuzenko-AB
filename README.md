@@ -57,8 +57,9 @@ them further. No glyph redrawing involved.
 
 Tracking is separate from size: `GAP` sets the space between letters and `SPACE_W` the
 space between words, so the letters can stay small while the text still spans the strip.
-`TIGHT` overrides both around the apostrophe, so `MAX'S` reads as one word instead of
-three glyphs adrift.
+The apostrophe gets its own two values: `TIGHT` keeps it attached to the `X` before it,
+`APOS` puts a single space before the `S`. Without that, `MAX'S` either collides into one
+blob or drifts apart into three glyphs.
 
 The background is transparent (`TITLE_BG = "none"`), so the strip blends into either
 GitHub theme rather than only the dark one. The black outline is what makes that work: it

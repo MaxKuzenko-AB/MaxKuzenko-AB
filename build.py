@@ -321,7 +321,7 @@ FONT = {
 TITLE_TEXT = "MAX'S GIT PAGE"
 # Airy tracking: small glyphs spread across the strip, rather than everything
 # scaled down together. The apostrophe hugs its neighbours instead.
-GAP, SPACE_W, TIGHT = 16, 24, 2
+GAP, SPACE_W, TIGHT, APOS = 16, 24, 2, 8
 CAP_TOP = 3
 CAP_H = 11
 CAP_BOT = CAP_TOP + CAP_H
@@ -343,11 +343,14 @@ TITLE_BG = "none"       # transparent: blends into either GitHub theme
 
 
 def gap_after(i):
-    """Tracking between glyph i and the next. The apostrophe is set tight on
-    both sides so MAX'S reads as one word."""
+    """Tracking between glyph i and the next. The apostrophe hugs the letter
+    before it and takes a single space after it, so MAX'S reads as one word
+    without the three glyphs colliding."""
     nxt = TITLE_TEXT[i + 1] if i + 1 < len(TITLE_TEXT) else ""
-    if TITLE_TEXT[i] == "'" or nxt == "'":
-        return TIGHT
+    if nxt == "'":
+        return TIGHT          # apostrophe stays attached to the X
+    if TITLE_TEXT[i] == "'":
+        return APOS           # one space before the S
     return GAP
 
 
