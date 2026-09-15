@@ -1,0 +1,47 @@
+# LEFT HALF ONLY - 20 wide x 44 tall, mirrored -> 40x44
+# Light ramp runs edge->centre: K outline, D shadow, M mid, L light, W specular.
+# Symmetric on purpose: front-facing 8-bit sprites lit from the front.
+............KKKKKKKK
+.........KKMMMMMMMMM
+.......KMMLLLLLLLLLL
+......KDMLLLLLLLWWWW
+.....KDMLLLLLLWWWWWW
+....KDMMLLLLLWWWWWWW
+....KDMMLLLLLLWWWWWW
+...KDMMLLLLLLLWWWWWW
+...KDMMLLLLLLLLWWWWW
+...KDMMLLLLLLLLLWWWW
+...KDMMLLLLLLLLLLWWW
+...KDMMLLLLLLLLLLLWW
+...KDMMLLLLLLLLLLLLL
+....KDMMLLLLLLLWWWWW
+....KDMMLLLLLLLLLLLL
+....KDMMLLLLLLLLLLLL
+....KDMMDDDDDDDDDDDD
+....KDMEEEEEEEEDMMLL
+....KDMEEEEEEEEDMMLL
+....KDMErRRRRrEDMMLL
+....KDMERRRRRREDMMLL
+....KDMErRRRRrEDMMLL
+....KDMEEEEEEEEDMMLL
+......KDMMEEEEEEDMLL
+......KDMLWWDDDDMLLL
+.......KDMLWLLLDMLLL
+........KDMLLLLMMKEE
+.........KDMLLLMMKEE
+..........KDMLLMMKEE
+..........KDMLLLMMKE
+..........KDMLLLLMMM
+..........KDMMKKKKKK
+..........KDMMTKTKTK
+...........KDMMTKTKT
+...........KDMMTKTKT
+...........KDMMKKKKK
+............KDMLLLLL
+.............KDMLLLL
+..............KDMLLL
+.............DDDDDDD
+.............DDDDDDD
+.............KDDDDDD
+............KDDDDDDD
+............KDDDDDDD
