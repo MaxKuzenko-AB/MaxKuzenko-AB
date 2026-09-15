@@ -59,28 +59,39 @@ def check_stays_on_canvas(sc):
 def check_title_wellformed():
     svg = build.render_title()
     ET.fromstring(svg)
-    missing = [c for c in build.TITLE_TEXT if c != " " and c not in build.FONT]
-    assert not missing, f"no glyph drawn for {missing}"
-    drawn = {c for c in build.TITLE_TEXT if c != " "}
-    return f"title parses, {len(drawn)} distinct glyphs drawn"
+    face, outline = build.title_pixels()
+    assert face and outline, "title needs both a face and an outline layer"
+    return f"title parses, {len(face)} face px over {len(outline)} outline px"
 
 
-def check_glyphs_rectangular():
-    """A ragged row in hand-typed glyph art shears every row below it, which
-    is easy to miss reading the source."""
-    for ch, rows in build.FONT.items():
-        widths = {len(r) for r in rows}
-        assert len(widths) == 1, f"glyph {ch!r} has mixed row widths {widths}"
-        assert len(rows) == build.CAP_H, \
-            f"glyph {ch!r} is {len(rows)} rows, want {build.CAP_H}"
-    return f"{len(build.FONT)} glyphs rectangular at cap height {build.CAP_H}"
+def check_art_rectangular():
+    """A ragged row in the stored bitmap shears every row below it, and the
+    art is wide enough that it would not be obvious reading the source."""
+    widths = {len(r) for r in build.TITLE_ART}
+    assert len(widths) == 1, f"mixed row widths {sorted(widths)}"
+    bad = {c for r in build.TITLE_ART for c in r} - set("#+.")
+    assert not bad, f"unknown symbols in the art: {sorted(bad)}"
+    return f"art rectangular at {build.ART_W}x{build.ART_H}"
+
+
+def check_face_is_not_white():
+    """The source art had white letter faces on a purple outline, which made
+    the letters vanish on a light background. Guard the remap: no fill in the
+    title may be near-white, or the light theme breaks again."""
+    svg = build.render_title()
+    fills = set(re.findall(r'(?:fill|stop-color)="(#[0-9a-fA-F]{6})"', svg))
+    def lum(h):
+        r, g, b = (int(h[i:i + 2], 16) for i in (1, 3, 5))
+        return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255
+    glare = {f for f in fills if lum(f) > 0.93}
+    assert not glare, f"near-white fills would disappear on a light page: {glare}"
+    return f"{len(fills)} title fills, none near-white"
 
 
 def check_title_gradient_covers_caps():
-    """Regression guard. The gradient must span exactly the cap band, in the
-    same coordinate space the glyph rects are drawn in. Measuring it in a
-    different space once put the ramp outside the letters entirely and
-    rendered them a single flat colour."""
+    """Regression guard. The gradient must span exactly the art band, in the
+    same coordinate space the rects are drawn in. Measuring it in a different
+    space once put the ramp outside the letters entirely."""
     svg = build.render_title()
     m = re.search(r'y1="(-?[0-9.]+)" x2="0" y2="(-?[0-9.]+)"', svg)
     span = (float(m.group(1)), float(m.group(2)))
@@ -89,7 +100,7 @@ def check_title_gradient_covers_caps():
     offs = [float(o) for o, _ in build.FIRE]
     assert offs == sorted(offs), "gradient stops out of order"
     assert offs[0] == 0 and offs[-1] == 100, "ramp must cover the full band"
-    return f"fire gradient spans the cap band in {len(offs)} stops"
+    return f"fire gradient spans the art band in {len(offs)} stops"
 
 
 def check_readme_matches_timings():
@@ -111,7 +122,7 @@ if __name__ == "__main__":
     results = [check_palette_exact(sc), check_svg_wellformed(svg),
                check_css_targets_exist(svg), check_everything_loops(),
                check_stays_on_canvas(sc), check_title_wellformed(),
-               check_glyphs_rectangular(),
+               check_art_rectangular(), check_face_is_not_white(),
                check_title_gradient_covers_caps(),
                check_readme_matches_timings()]
     for r in results:

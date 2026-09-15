@@ -30,31 +30,26 @@ python3 test_build.py                       # 7 structural checks
 
 **The letterforms are pixel art, not a font.** An SVG loaded through an `<img>` cannot
 fetch external fonts, so naming a typeface would only work for viewers who already have
-it installed. The glyphs live in the `FONT` dict in `build.py` — a 7x7 box with 2px
-strokes, ten of them, covering every distinct character in the title. Nothing to
-download, nothing to license, and the arcade look wants visible pixels anyway.
+it installed. The title is supplied artwork, already laid out and outlined, so it is
+stored as one 193x8 two-tone bitmap in `TITLE_ART` rather than a glyph set plus a layout
+solver: `#` is the letter face, `+` the outline, `.` transparent.
 
-They were transcribed from reference block art by **parsing it rather than retyping it**:
-blank columns split the glyphs, and the extraction was round-tripped back against the
-original before being committed. Hand-copying ten 7x7 grids is exactly where a silent
-one-pixel error gets in.
+It was transcribed by **parsing the source SVG rather than retyping it** — reading the
+`<rect>` geometry onto a pixel grid, keyed by fill colour, and rendering each colour as
+its own mask to confirm which was which before committing anything.
 
-**Tracking is solved for, not fixed.** `layout()` subtracts the glyph widths and the two
-fixed apostrophe gaps from `TITLE_W`, then shares the remainder between the letter and
-word gaps by `WORD_RATIO`, so the text spans the strip edge to edge and lines up with the
-beach above it. The metrics were measured from the gaps in that same reference art —
-letter 11, word 16, six before the apostrophe, one after — and `WORD_RATIO = 1.45`
-reproduces them exactly at `TITLE_W = 205`.
+**The two tones are remapped, and that fixes a real defect.** In the source, letter faces
+were white and the outline purple. White faces disappear on a light background, so the
+original rendered as broken purple rings on GitHub's light theme. Here the face takes the
+fire gradient and the outline takes black, so the letters hold up on either theme. A test
+now fails if any title fill is near-white, which caught the gradient's own tail sitting
+at `#fff9c0` and pulled it back to a bright yellow.
 
-Letter size comes from `TITLE_W` alone: the strip renders at 100% of the README column,
-so more grid units means each unit is fewer screen pixels and the glyphs shrink. Lower it
-to grow them; the tracking re-solves either way.
+One caveat worth knowing: with only 8 pixel rows, scaling to a non-integer factor can
+drop a whole row. That is a 12% slice of the letter height, so a careless preview can
+look badly broken when the artwork is fine. Checked at 880, 845 and 760px — all clean.
 
-The **outline is an 8-connected dilation of the ink**, computed at build time, so it wraps
-the letterforms exactly. Stroking the SVG instead would outline every individual `<rect>`
-and produce a grid of boxes.
-
-The fire ramp runs dark red through orange to pale yellow across the cap height, as one
+The fire ramp runs dark red through orange to bright yellow across the art band, as one
 `linearGradient` in `userSpaceOnUse` so the colour bands line up across every letter
 rather than restarting per glyph. Unlike chrome type there is no hard break — the
 continuous fall is the whole effect.

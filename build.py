@@ -288,114 +288,57 @@ def render(sc, scale, animate=True):
 # stepped diagonals are what make it read as a pixel font rather than a
 # condensed sans. Drawn rather than outlined from a real face, so there is no
 # font file, no build dependency, and nothing to license.
-# Letterforms transcribed from the reference block art by parsing it:
-# blank columns split the glyphs, and the extraction was round-tripped
-# back to the original before being written here. 7x7 box, 2px strokes.
-FONT = {
- "M": ("##...##", "###.###", "#######", "##.#.##", "##.#.##", "##...##",
-       "##...##"),
- "A": ("..###..", ".##.##.", "##...##", "##...##", "#######", "##...##",
-       "##...##"),
- "X": ("##...##", "##...##", ".##.##.", "..###..", ".##.##.", "##...##",
-       "##...##"),
- "'": ("##", "##", "##", "..", "..", "..", ".."),
- "S": (".#####.", "##...##", "##.....", ".#####.", ".....##", "##...##",
-       ".#####."),
- "G": ("..#####", ".##....", "##.....", "##..###", "##...##", ".##..##",
-       "..#####"),
- "I": ("######", "..##..", "..##..", "..##..", "..##..", "..##..", "######"),
- "T": ("######", "..##..", "..##..", "..##..", "..##..", "..##..", "..##.."),
- "P": ("######.", "##...##", "##...##", "##...##", "######.", "##.....",
-       "##....."),
- "E": ("#######", "##.....", "##.....", "######.", "##.....", "##.....",
-       "#######"),
-}
-
+# The title is supplied art, laid out and outlined already, so it is stored as
+# one bitmap rather than a font plus a layout solver. In the source SVG the
+# letter faces were white and the outline purple; white faces vanish on a light
+# background, so the two tones are remapped here - face takes the fire gradient,
+# outline takes a dark tone - which fixes that as a side effect.
+#   '#' face   '+' outline   '.' transparent
 TITLE_TEXT = "MAX'S GIT PAGE"
-# Tracking is solved for, not fixed: the gaps stretch so the text fills the
-# strip edge to edge. WORD_RATIO keeps word gaps wider than letter gaps, and
-# the two apostrophe gaps stay fixed so MAX'S holds together while everything
-# around it breathes.
-MARGIN, WORD_RATIO = 6, 1.45
-APOS_PRE, APOS_POST = 6, 1     # X ' S : space before the mark, none after
+TITLE_ART = (
+    "##+++##+..........++###++..........+##+.+##+....+##++#####++...............++#####+.........+######+.........+######+..............+######++..........++###++...........++#####+.........+#######",
+    "###+###+.........++##+##++.........+##+++##+....+##+##+++##+..............++##+++++.........+++##+++.........+++##+++..............+##+++##+.........++##+##++.........++##+++++.........+##+++++",
+    "#######+.........+##+++##+.........++##+##++....+##+##++++++..............+##++++++...........+##+.............+##+................+##+.+##+.........+##+++##+.........+##++++++.........+##+++++",
+    "##+#+##+.........+##+++##+..........++###++.....+++++#####++..............+##++###+...........+##+.............+##+................+##+++##+.........+##+++##+.........+##++###+.........+######+",
+    "##+#+##+.........+#######+.........++##+##++.......++++++##+..............+##+++##+...........+##+.............+##+................+######++.........+#######+.........+##+++##+.........+##+++++",
+    "##+++##+.........+##+++##+.........+##+++##+.......+##+++##+..............++##++##+.........+++##+++...........+##+................+##+++++..........+##+++##+.........++##++##+.........+##+++++",
+    "##+.+##+.........+##+.+##+.........+##+.+##+.......++#####++...............++#####+.........+######+...........+##+................+##+..............+##+.+##+..........++#####+.........+#######",
+    "+++.++++.........++++.++++.........++++.++++........+++++++.................+++++++.........++++++++...........++++................++++..............++++.++++...........+++++++.........++++++++",
+)
+ART_W = len(TITLE_ART[0])
+ART_H = len(TITLE_ART)
+
+MARGIN = 6
 CAP_TOP = 3
-CAP_H = 7
-CAP_BOT = CAP_TOP + CAP_H
+CAP_BOT = CAP_TOP + ART_H
 # The strip always renders at 100% of the README column, so letter size is set
 # purely by how many grid units wide the viewBox is: more units means each unit
 # is fewer screen pixels, so the glyphs shrink. Raise TITLE_W to shrink them
 # further, lower it to grow them. At 460 the text occupies about 40% of the
 # width and the caps land near 22px on a ~880px column.
-TITLE_W = 205
+TITLE_W = ART_W + 2 * MARGIN
 TITLE_H = CAP_BOT + CAP_TOP
 
 # Smooth fire ramp, top to bottom. Unlike chrome type there is no hard break:
 # the whole effect is the continuous maroon -> red -> orange -> yellow fall.
 FIRE = (("0", "#b02a14"), ("18", "#d9451a"), ("38", "#ef6a1e"),
-        ("56", "#fa9526"), ("74", "#ffc233"), ("89", "#ffe75a"),
-        ("100", "#fff9c0"))
+        ("56", "#fa9526"), ("74", "#ffc233"), ("89", "#ffd94a"),
+        ("100", "#ffe98c"))
 OUTLINE = "#000000"
 TITLE_BG = "none"       # transparent: blends into either GitHub theme
 
 
-def layout():
-    """Solve the tracking so the text spans TITLE_W, then return the x of each
-    glyph. Fixed gaps and glyph widths are subtracted first; whatever is left
-    is shared out between the letter and word gaps by WORD_RATIO."""
-    glyphs = [c for c in TITLE_TEXT if c != " "]
-    # seps[i] is the separator between glyphs[i] and glyphs[i+1]. A space has
-    # to be carried forward: at the point it is read, the separator it belongs
-    # to has not been created yet, so writing to seps[-1] retagged the wrong
-    # slot and shifted every word gap one place left.
-    seps, prev, pending = [], None, False
-    for ch in TITLE_TEXT:
-        if ch == " ":
-            pending = True
-            continue
-        if prev is not None:
-            seps.append("word" if pending else
-                        "post" if prev == "'" else
-                        "pre" if ch == "'" else "letter")
-        prev, pending = ch, False
-    ink = sum(len(FONT[c][0]) for c in glyphs)
-    fixed = sum(APOS_PRE if s == "pre" else APOS_POST
-                for s in seps if s in ("pre", "post"))
-    n_letter = seps.count("letter")
-    n_word = seps.count("word")
-    slack = TITLE_W - 2 * MARGIN - ink - fixed
-    unit = slack / (n_letter + WORD_RATIO * n_word) if (n_letter or n_word) else 0
-    width = {"letter": round(unit), "word": round(unit * WORD_RATIO),
-             "pre": APOS_PRE, "post": APOS_POST}
-    xs, x = [], 0
-    for i, c in enumerate(glyphs):
-        xs.append(x)
-        x += len(FONT[c][0])
-        if i < len(seps):
-            x += width[seps[i]]
-    return glyphs, xs, x
-
-
-def text_width():
-    return layout()[2]
-
-
 def title_pixels():
-    """Lay the string out centred and return (ink, outline) pixel sets.
-    The outline is an 8-connected dilation of the ink, so it wraps the
-    letterforms exactly instead of stroking every individual rect."""
-    ink = set()
-    glyphs, xs, total = layout()
-    x0 = (TITLE_W - total) // 2          # absorbs the rounding residue only
-    for ch, gx in zip(glyphs, xs):
-        for dy, row in enumerate(FONT[ch]):
-            for dx, c in enumerate(row):
-                if c == "#":
-                    ink.add((x0 + gx + dx, CAP_TOP + dy))
-    ring = {(px + dx, py + dy)
-            for px, py in ink for dx in (-1, 0, 1) for dy in (-1, 0, 1)}
-    return ink, ring - ink
-
-
+    """Read the bitmap into (face, outline) pixel sets, centred in the strip."""
+    face, outline = set(), set()
+    x0 = (TITLE_W - ART_W) // 2
+    for dy, row in enumerate(TITLE_ART):
+        for dx, c in enumerate(row):
+            if c == "#":
+                face.add((x0 + dx, CAP_TOP + dy))
+            elif c == "+":
+                outline.add((x0 + dx, CAP_TOP + dy))
+    return face, outline
 
 
 def rle(pixels, colour):
@@ -417,7 +360,7 @@ def rle(pixels, colour):
     return "".join(f'<rect x="{x}" y="{y}" width="{w}" height="1"/>' for x, y, w in out)
 
 
-def render_title(scale=3):
+def render_title(scale=5):
     ink, ring = title_pixels()
     tw, th = TITLE_W, TITLE_H
     stops = "".join(f'<stop offset="{o}%" stop-color="{c}"/>' for o, c in FIRE)
@@ -447,8 +390,9 @@ def main():
         out = render_title()
         print(out, end="")
         ink, ring = title_pixels()
-        print(f"title: {TITLE_W}x{TITLE_H} grid, text {text_width()} wide, "
-              f"{len(ink)} ink px, {len(out)} bytes", file=sys.stderr)
+        print(f"title: {TITLE_W}x{TITLE_H} grid, art {ART_W}x{ART_H}, "
+              f"{len(ink)} face px, {len(ring)} outline px, {len(out)} bytes",
+              file=sys.stderr)
         return
     sc = build_scene()
     out = render(sc, a.scale, animate=not a.static)
