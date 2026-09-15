@@ -56,12 +56,38 @@ def check_stays_on_canvas(sc):
     return f"{len(sc.layers) - 1} layers within {build.W}x{build.H}"
 
 
+def check_title_wellformed():
+    svg = build.render_title()
+    ET.fromstring(svg)
+    n = len([c for c in build.TITLE["text"] if c != " "])
+    assert svg.count("<path") == n, f"{svg.count('<path')} paths for {n} letters"
+    return f"title parses, {n} glyph paths"
+
+
+def check_title_gradient_covers_caps():
+    """Regression guard. The gradient is referenced from inside the translated
+    glyph group, so its userSpaceOnUse coordinates live in that space -
+    baseline at 0, cap line at -CAP. Measuring it in the outer space instead
+    put the whole ramp below the letters and rendered them solid white."""
+    svg = build.render_title()
+    y1 = float(re.search(r'y1="(-?[\d.]+)" x2="0" y2="(-?[\d.]+)"', svg).group(1))
+    y2 = float(re.search(r'y1="(-?[\d.]+)" x2="0" y2="(-?[\d.]+)"', svg).group(2))
+    assert y1 == -build.CAP and y2 == 0, f"gradient spans {y1}..{y2}, want {-build.CAP}..0"
+    offs = [float(o) for o, _ in build.CHROME]
+    assert offs == sorted(offs), "gradient stops out of order"
+    gaps = [(b - a, a) for a, b in zip(offs, offs[1:])]
+    tightest, at = min(gaps)
+    assert tightest < 1.0, "no hard split: chrome type needs an abrupt stop"
+    return f"gradient spans the cap height, hard split at {at:.0f}%"
+
+
 if __name__ == "__main__":
     sc = build.build_scene()
     svg = build.render(sc, 1)
     results = [check_palette_exact(sc), check_svg_wellformed(svg),
                check_css_targets_exist(svg), check_everything_loops(),
-               check_stays_on_canvas(sc)]
+               check_stays_on_canvas(sc), check_title_wellformed(),
+               check_title_gradient_covers_caps()]
     for r in results:
         print(f"  ok  {r}")
     print(f"{len(results)} checks passed")
