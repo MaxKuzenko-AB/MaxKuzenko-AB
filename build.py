@@ -316,7 +316,11 @@ CAP_BOT = CAP_TOP + ART_H
 # is fewer screen pixels, so the glyphs shrink. Raise TITLE_W to shrink them
 # further, lower it to grow them. At 460 the text occupies about 40% of the
 # width and the caps land near 22px on a ~880px column.
-TITLE_W = ART_W + 2 * MARGIN
+# Letter size and total width are independent. The art's glyphs are a fixed
+# size in grid units, so widening the strip makes each unit fewer screen pixels
+# and the letters shrink; the gaps are then scaled up to keep the text spanning
+# the full width. Raise TITLE_W to shrink the letters further.
+TITLE_W = 290
 TITLE_H = CAP_BOT + CAP_TOP
 
 # Smooth fire ramp, top to bottom. Unlike chrome type there is no hard break:
@@ -328,16 +332,46 @@ OUTLINE = "#000000"
 TITLE_BG = "none"       # transparent: blends into either GitHub theme
 
 
+def art_groups():
+    """Split the stored art into its glyphs on blank columns, keeping the gap
+    that followed each one so the original spacing can be scaled rather than
+    reinvented."""
+    blank = [all(r[x] == "." for r in TITLE_ART) for x in range(ART_W)]
+    spans, run = [], None
+    for x, b in enumerate(blank):
+        if not b and run is None:
+            run = x
+        elif b and run is not None:
+            spans.append((run, x))
+            run = None
+    if run is not None:
+        spans.append((run, ART_W))
+    gaps = [spans[i + 1][0] - spans[i][1] for i in range(len(spans) - 1)]
+    return spans, gaps
+
+
 def title_pixels():
-    """Read the bitmap into (face, outline) pixel sets, centred in the strip."""
+    """Read the bitmap into (face, outline) pixel sets, with the glyph gaps
+    stretched so the text spans the strip at whatever TITLE_W is set to."""
+    spans, gaps = art_groups()
+    ink_w = sum(b - a for a, b in spans)
+    slack = TITLE_W - 2 * MARGIN - ink_w
+    # scale the original gaps in proportion, so the tight 'S pair and the wider
+    # word gaps keep their relationship instead of being re-derived
+    scale = slack / sum(gaps) if sum(gaps) else 1
+    grown = [max(1, round(g * scale)) for g in gaps]
+    total = ink_w + sum(grown)
+
     face, outline = set(), set()
-    x0 = (TITLE_W - ART_W) // 2
-    for dy, row in enumerate(TITLE_ART):
-        for dx, c in enumerate(row):
-            if c == "#":
-                face.add((x0 + dx, CAP_TOP + dy))
-            elif c == "+":
-                outline.add((x0 + dx, CAP_TOP + dy))
+    x = (TITLE_W - total) // 2               # absorbs the rounding residue only
+    for i, (a, b) in enumerate(spans):
+        for dy, row in enumerate(TITLE_ART):
+            for dx, c in enumerate(row[a:b]):
+                if c == "#":
+                    face.add((x + dx, CAP_TOP + dy))
+                elif c == "+":
+                    outline.add((x + dx, CAP_TOP + dy))
+        x += (b - a) + (grown[i] if i < len(grown) else 0)
     return face, outline
 
 

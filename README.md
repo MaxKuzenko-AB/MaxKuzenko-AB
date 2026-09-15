@@ -45,6 +45,14 @@ fire gradient and the outline takes black, so the letters hold up on either them
 now fails if any title fill is near-white, which caught the gradient's own tail sitting
 at `#fff9c0` and pulled it back to a bright yellow.
 
+**Letter size and total width are independent.** The art's glyphs are a fixed size in
+grid units, so widening the strip via `TITLE_W` makes each unit fewer screen pixels and
+the letters shrink. `title_pixels()` then splits the art back into its glyphs on blank
+columns and scales the original gaps in proportion to refill the width, so the tight `'S`
+pair and the wider word gaps keep their relationship rather than being re-derived. Raise
+`TITLE_W` to shrink the letters further; lower it to grow them. Either way the text still
+spans the strip and lines up with the beach above.
+
 One caveat worth knowing: with only 8 pixel rows, scaling to a non-integer factor can
 drop a whole row. That is a 12% slice of the letter height, so a careless preview can
 look badly broken when the artwork is fine. Checked at 880, 845 and 760px — all clean.
