@@ -30,15 +30,26 @@ python3 test_build.py                       # 7 structural checks
 
 **The letterforms are hand-drawn pixels, not a font.** An SVG loaded through an `<img>`
 cannot fetch external fonts, so naming a typeface would only work for viewers who already
-have it installed. The glyphs are ASCII art in the `FONT` dict in `build.py`, on a 13x11
-grid with 3px strokes — ten of them, which is every distinct character in the title.
-Nothing to download, nothing to license, and the arcade look wants visible pixels anyway.
+have it installed. The glyphs are ASCII art in the `FONT` dict in `build.py` — a wide,
+short 17x8 box with 3px stems and 2px bars, ten of them, covering every distinct
+character in the title. Nothing to download, nothing to license, and the arcade look
+wants visible pixels anyway.
 
 Chamfered corners are what separate an arcade face from a plain blocky one. They are cut
 into the art on the corners that should have them. Deriving them programmatically, by
-removing every outer convex corner pixel, was tried first and failed badly: with 3px
-strokes it eats both ends of every stroke and every diagonal step, eroding the letters
-into fragments.
+removing every outer convex corner pixel, was tried first and failed badly: with thick
+stems it eats both ends of every stroke and every diagonal step, eroding the letters into
+fragments.
+
+**Tracking is solved for, not fixed.** `layout()` subtracts the glyph widths and the two
+fixed apostrophe gaps from `TITLE_W`, then shares the remainder out between the letter and
+word gaps by `WORD_RATIO`, so the text spans the strip edge to edge and lines up with the
+beach above it. `APOS_PRE` puts a space between the `X` and the mark; `APOS_POST` is zero,
+so `'S` closes up.
+
+Letter size still comes from `TITLE_W` alone: the strip renders at 100% of the README
+column, so more grid units means each unit is fewer screen pixels and the glyphs shrink.
+Lower it to grow them.
 
 The **outline is an 8-connected dilation of the ink**, computed at build time, so it wraps
 the letterforms exactly. Stroking the SVG instead would outline every individual `<rect>`
@@ -48,18 +59,6 @@ The fire ramp runs dark red through orange to pale yellow across the cap height,
 `linearGradient` in `userSpaceOnUse` so the colour bands line up across every letter
 rather than restarting per glyph. Unlike chrome type there is no hard break — the
 continuous fall is the whole effect.
-
-The strip always renders at 100% of the README column, so **letter size is set purely by
-how many grid units wide the `viewBox` is**. More units means each unit is fewer screen
-pixels, so the glyphs shrink. `TITLE_W = 460` puts the text at roughly 40% of the width
-with caps near 22px on a typical column; lower it to grow the letters, raise it to shrink
-them further. No glyph redrawing involved.
-
-Tracking is separate from size: `GAP` sets the space between letters and `SPACE_W` the
-space between words, so the letters can stay small while the text still spans the strip.
-The apostrophe gets its own two values: `TIGHT` keeps it attached to the `X` before it,
-`APOS` puts a single space before the `S`. Without that, `MAX'S` either collides into one
-blob or drifts apart into three glyphs.
 
 The background is transparent (`TITLE_BG = "none"`), so the strip blends into either
 GitHub theme rather than only the dark one. The black outline is what makes that work: it

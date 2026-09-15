@@ -289,48 +289,49 @@ def render(sc, scale, animate=True):
 # condensed sans. Drawn rather than outlined from a real face, so there is no
 # font file, no build dependency, and nothing to license.
 FONT = {
- "M": (".###.....###.", "####.....####", "#####...#####", "###.##.##.###",
-       "###..###..###", "###..###..###", "###.......###", "###.......###",
-       "###.......###", "###.......###", "###.......###"),
- "A": ("...#######...", "..#########..", ".###.....###.", "###.......###",
-       "###.......###", "#############", "#############", "###.......###",
-       "###.......###", "###.......###", "###.......###"),
- "X": ("###.......###", "###.......###", ".###.....###.", "..###...###..",
-       "...#######...", "....#####....", "...#######...", "..###...###..",
-       ".###.....###.", "###.......###", "###.......###"),
- "S": (".###########.", "#############", "###..........", "###..........",
-       "###..........", "#############", "#############", "..........###",
-       "..........###", "#############", ".###########."),
- "G": (".###########.", "#############", "###.......###", "###..........",
-       "###..........", "###...#######", "###...#######", "###.......###",
-       "###.......###", "#############", ".###########."),
- "T": (".###########.", "#############", ".....###.....", ".....###.....",
-       ".....###.....", ".....###.....", ".....###.....", ".....###.....",
-       ".....###.....", ".....###.....", ".....###....."),
- "P": (".###########.", "#############", "###.......###", "###.......###",
-       "#############", "############.", "###..........", "###..........",
-       "###..........", "###..........", "###.........."),
- "E": (".###########.", "#############", "###..........", "###..........",
-       "###########..", "###########..", "###..........", "###..........",
-       "###..........", "#############", ".###########."),
- "I": (".###.", "#####", "#####", "#####", "#####", "#####", "#####",
-       "#####", "#####", "#####", ".###."),
- "'": (".###.", ".###.", ".###.", "..##.", ".....", ".....", ".....",
-       ".....", ".....", ".....", "....."),
+ "M": (".###.........###.", "####.........####", "###.##.....##.###",
+       "###..##...##..###", "###....###....###", "###...........###",
+       "####.........####", ".###.........###."),
+ "A": ("....#########....", "..#############..", "###...........###",
+       "#################", "#################", "###...........###",
+       "###...........###", "###...........###"),
+ "X": ("###...........###", ".###.........###.", "..####.....####..",
+       "....#########....", "....#########....", "..####.....####..",
+       ".###.........###.", "###...........###"),
+ "S": (".###############.", "#################", "###..............",
+       "#################", "#################", "..............###",
+       "#################", ".###############."),
+ "G": (".###############.", "#################", "###..............",
+       "###......########", "###......########", "###...........###",
+       "#################", ".###############."),
+ "T": (".###############.", "#################", ".......###.......",
+       ".......###.......", ".......###.......", ".......###.......",
+       ".......###.......", ".......###......."),
+ "P": (".###############.", "#################", "###...........###",
+       "#################", "################.", "###..............",
+       "###..............", "###.............."),
+ "E": (".###############.", "#################", "###..............",
+       "##############...", "##############...", "###..............",
+       "#################", ".###############."),
+ "I": (".###.", "#####", "#####", "#####", "#####", "#####", "#####", ".###."),
+ "'": (".###.", ".###.", "..##.", ".....", ".....", ".....", ".....", "....."),
 }
 TITLE_TEXT = "MAX'S GIT PAGE"
-# Airy tracking: small glyphs spread across the strip, rather than everything
-# scaled down together. The apostrophe hugs its neighbours instead.
-GAP, SPACE_W, TIGHT, APOS = 16, 24, 2, 8
+# Tracking is solved for, not fixed: the gaps stretch so the text fills the
+# strip edge to edge. WORD_RATIO keeps word gaps wider than letter gaps, and
+# the two apostrophe gaps stay fixed so MAX'S holds together while everything
+# around it breathes.
+MARGIN, WORD_RATIO = 6, 1.8
+APOS_PRE, APOS_POST = 8, 0     # X ' S : space before the mark, none after
 CAP_TOP = 3
-CAP_H = 11
+CAP_H = 8
 CAP_BOT = CAP_TOP + CAP_H
 # The strip always renders at 100% of the README column, so letter size is set
 # purely by how many grid units wide the viewBox is: more units means each unit
 # is fewer screen pixels, so the glyphs shrink. Raise TITLE_W to shrink them
 # further, lower it to grow them. At 460 the text occupies about 40% of the
 # width and the caps land near 22px on a ~880px column.
-TITLE_W = 460
+TITLE_W = 380
 TITLE_H = CAP_BOT + CAP_TOP
 
 # Smooth fire ramp, top to bottom. Unlike chrome type there is no hard break:
@@ -342,23 +343,45 @@ OUTLINE = "#000000"
 TITLE_BG = "none"       # transparent: blends into either GitHub theme
 
 
-def gap_after(i):
-    """Tracking between glyph i and the next. The apostrophe hugs the letter
-    before it and takes a single space after it, so MAX'S reads as one word
-    without the three glyphs colliding."""
-    nxt = TITLE_TEXT[i + 1] if i + 1 < len(TITLE_TEXT) else ""
-    if nxt == "'":
-        return TIGHT          # apostrophe stays attached to the X
-    if TITLE_TEXT[i] == "'":
-        return APOS           # one space before the S
-    return GAP
+def layout():
+    """Solve the tracking so the text spans TITLE_W, then return the x of each
+    glyph. Fixed gaps and glyph widths are subtracted first; whatever is left
+    is shared out between the letter and word gaps by WORD_RATIO."""
+    glyphs = [c for c in TITLE_TEXT if c != " "]
+    # seps[i] is the separator between glyphs[i] and glyphs[i+1]. A space has
+    # to be carried forward: at the point it is read, the separator it belongs
+    # to has not been created yet, so writing to seps[-1] retagged the wrong
+    # slot and shifted every word gap one place left.
+    seps, prev, pending = [], None, False
+    for ch in TITLE_TEXT:
+        if ch == " ":
+            pending = True
+            continue
+        if prev is not None:
+            seps.append("word" if pending else
+                        "post" if prev == "'" else
+                        "pre" if ch == "'" else "letter")
+        prev, pending = ch, False
+    ink = sum(len(FONT[c][0]) for c in glyphs)
+    fixed = sum(APOS_PRE if s == "pre" else APOS_POST
+                for s in seps if s in ("pre", "post"))
+    n_letter = seps.count("letter")
+    n_word = seps.count("word")
+    slack = TITLE_W - 2 * MARGIN - ink - fixed
+    unit = slack / (n_letter + WORD_RATIO * n_word) if (n_letter or n_word) else 0
+    width = {"letter": round(unit), "word": round(unit * WORD_RATIO),
+             "pre": APOS_PRE, "post": APOS_POST}
+    xs, x = [], 0
+    for i, c in enumerate(glyphs):
+        xs.append(x)
+        x += len(FONT[c][0])
+        if i < len(seps):
+            x += width[seps[i]]
+    return glyphs, xs, x
 
 
 def text_width():
-    w = 0
-    for i, ch in enumerate(TITLE_TEXT):
-        w += SPACE_W if ch == " " else len(FONT[ch][0]) + gap_after(i)
-    return w - gap_after(len(TITLE_TEXT) - 1)
+    return layout()[2]
 
 
 def title_pixels():
@@ -366,17 +389,13 @@ def title_pixels():
     The outline is an 8-connected dilation of the ink, so it wraps the
     letterforms exactly instead of stroking every individual rect."""
     ink = set()
-    x = (TITLE_W - text_width()) // 2
-    for i, ch in enumerate(TITLE_TEXT):
-        if ch == " ":
-            x += SPACE_W
-            continue
-        rows = FONT[ch]
-        for dy, row in enumerate(rows):
+    glyphs, xs, total = layout()
+    x0 = (TITLE_W - total) // 2          # absorbs the rounding residue only
+    for ch, gx in zip(glyphs, xs):
+        for dy, row in enumerate(FONT[ch]):
             for dx, c in enumerate(row):
                 if c == "#":
-                    ink.add((x + dx, CAP_TOP + dy))
-        x += len(rows[0]) + gap_after(i)
+                    ink.add((x0 + gx + dx, CAP_TOP + dy))
     ring = {(px + dx, py + dy)
             for px, py in ink for dx in (-1, 0, 1) for dy in (-1, 0, 1)}
     return ink, ring - ink
