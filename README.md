@@ -2,7 +2,9 @@
 
 <img src="./title.svg" alt="Max's Git Page" width="100%" />
 
-# :sunglasses:  Max's Git Page  :sunglasses:
+<img src="./venice-beach.svg" alt="Animated 8-bit Venice Beach: swaying palms, rolling surf and drifting clouds" width="100%" />
+
+### :sunglasses: QE at AuditBoard. I break things on purpose, then make sure they stay broken-proof. :sunglasses:
 
 </div>
 
@@ -61,16 +63,23 @@ rendered dimensions. Adjacent same-colour pixels are run-length merged into sing
 
 **Nothing plays once.** Every animation is an infinite loop, asserted by a test:
 
-| Element | Frames | Period |
-|---|---|---|
-| Palm fronds, near tree | 4 | 2s |
-| Palm fronds, far tree | 4 | 2.5s |
-| Ocean crests | 4 | 1.5s |
-| Shoreline foam | 4 | 3.1s |
-| Cloud drift | scrolled | 1.5s |
+| Element | Frames | Period | What the period measures |
+|---|---|---|---|
+| Palm fronds, near tree | 4 | 2s | one full sway cycle |
+| Palm fronds, far tree | 4 | 2.5s | one full sway cycle |
+| Ocean crests | 4 | 1.5s | one full crest cycle |
+| Shoreline foam | 4 | 3.1s | one advance and retreat |
+| Cloud drift | scrolled | 18s | one full 320px wrap |
 
-Periods are deliberately non-harmonic. Shared factors would make the scene visibly pulse
-in unison every few seconds.
+The last row is a different unit from the rest, which is worth spelling out. The frame
+sets cycle four discrete sprites, so their period is one cycle. The clouds instead
+translate continuously across twice the canvas width, so their period is a full traverse.
+18s reads as a visible drift; the same number used as if it were a frame period would
+send the clouds across the banner in about a second and a half, which looks like a gale.
+
+Frame periods are deliberately non-harmonic. 2 / 2.5 / 1.5 / 3.1 only re-sync every 30
+seconds, so nothing visibly pulses in unison. Giving two elements the same period locks
+them in step, which is why the clouds do not reuse the crest value.
 
 Every loop uses `steps()` timing to swap discrete frames, because interpolating pixel art
 puts pixels on half-coordinates and blurs the grid. The cloud scroll is quantised with

@@ -6,7 +6,7 @@ settled by rendering it and looking. They catch the silent breakage a glance
 might miss: an unmapped colour, a CSS rule pointing at a group that no longer
 exists, a layer painting off-canvas, or an animation that stops.
 """
-import re, xml.etree.ElementTree as ET
+import pathlib, re, xml.etree.ElementTree as ET
 import build
 
 
@@ -81,13 +81,27 @@ def check_title_gradient_covers_caps():
     return f"gradient spans the cap height, hard split at {at:.0f}%"
 
 
+def check_readme_matches_timings():
+    """The README table is documentation only - editing it does not change the
+    animation, which lives in FRAME_SETS and CLOUD_DRIFT. This guards against
+    the two drifting apart, which has already happened once."""
+    rd = pathlib.Path(__file__).parent.joinpath("README.md").read_text()
+    documented = [float(v) for v in
+                  re.findall(r"\|\s*(?:4|scrolled)\s*\|\s*([\d.]+)s\s*\|", rd)]
+    actual = [p for _, _, p in build.FRAME_SETS] + [build.CLOUD_DRIFT]
+    assert documented, "no timing table found in README"
+    assert documented == actual, f"README says {documented}, code says {actual}"
+    return f"README timing table matches code ({len(actual)} rows)"
+
+
 if __name__ == "__main__":
     sc = build.build_scene()
     svg = build.render(sc, 1)
     results = [check_palette_exact(sc), check_svg_wellformed(svg),
                check_css_targets_exist(svg), check_everything_loops(),
                check_stays_on_canvas(sc), check_title_wellformed(),
-               check_title_gradient_covers_caps()]
+               check_title_gradient_covers_caps(),
+               check_readme_matches_timings()]
     for r in results:
         print(f"  ok  {r}")
     print(f"{len(results)} checks passed")
