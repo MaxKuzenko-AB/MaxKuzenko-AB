@@ -288,50 +288,45 @@ def render(sc, scale, animate=True):
 # stepped diagonals are what make it read as a pixel font rather than a
 # condensed sans. Drawn rather than outlined from a real face, so there is no
 # font file, no build dependency, and nothing to license.
+# Letterforms transcribed from the reference block art by parsing it:
+# blank columns split the glyphs, and the extraction was round-tripped
+# back to the original before being written here. 7x7 box, 2px strokes.
 FONT = {
- "M": (".###.........###.", "####.........####", "###.##.....##.###",
-       "###..##...##..###", "###....###....###", "###...........###",
-       "####.........####", ".###.........###."),
- "A": ("....#########....", "..#############..", "###...........###",
-       "#################", "#################", "###...........###",
-       "###...........###", "###...........###"),
- "X": ("###...........###", ".###.........###.", "..####.....####..",
-       "....#########....", "....#########....", "..####.....####..",
-       ".###.........###.", "###...........###"),
- "S": (".###############.", "#################", "###..............",
-       "#################", "#################", "..............###",
-       "#################", ".###############."),
- "G": (".###############.", "#################", "###..............",
-       "###......########", "###......########", "###...........###",
-       "#################", ".###############."),
- "T": (".###############.", "#################", ".......###.......",
-       ".......###.......", ".......###.......", ".......###.......",
-       ".......###.......", ".......###......."),
- "P": (".###############.", "#################", "###...........###",
-       "#################", "################.", "###..............",
-       "###..............", "###.............."),
- "E": (".###############.", "#################", "###..............",
-       "##############...", "##############...", "###..............",
-       "#################", ".###############."),
- "I": (".###.", "#####", "#####", "#####", "#####", "#####", "#####", ".###."),
- "'": (".###.", ".###.", "..##.", ".....", ".....", ".....", ".....", "....."),
+ "M": ("##...##", "###.###", "#######", "##.#.##", "##.#.##", "##...##",
+       "##...##"),
+ "A": ("..###..", ".##.##.", "##...##", "##...##", "#######", "##...##",
+       "##...##"),
+ "X": ("##...##", "##...##", ".##.##.", "..###..", ".##.##.", "##...##",
+       "##...##"),
+ "'": ("##", "##", "##", "..", "..", "..", ".."),
+ "S": (".#####.", "##...##", "##.....", ".#####.", ".....##", "##...##",
+       ".#####."),
+ "G": ("..#####", ".##....", "##.....", "##..###", "##...##", ".##..##",
+       "..#####"),
+ "I": ("######", "..##..", "..##..", "..##..", "..##..", "..##..", "######"),
+ "T": ("######", "..##..", "..##..", "..##..", "..##..", "..##..", "..##.."),
+ "P": ("######.", "##...##", "##...##", "##...##", "######.", "##.....",
+       "##....."),
+ "E": ("#######", "##.....", "##.....", "######.", "##.....", "##.....",
+       "#######"),
 }
+
 TITLE_TEXT = "MAX'S GIT PAGE"
 # Tracking is solved for, not fixed: the gaps stretch so the text fills the
 # strip edge to edge. WORD_RATIO keeps word gaps wider than letter gaps, and
 # the two apostrophe gaps stay fixed so MAX'S holds together while everything
 # around it breathes.
-MARGIN, WORD_RATIO = 6, 1.8
-APOS_PRE, APOS_POST = 8, 0     # X ' S : space before the mark, none after
+MARGIN, WORD_RATIO = 6, 1.45
+APOS_PRE, APOS_POST = 6, 1     # X ' S : space before the mark, none after
 CAP_TOP = 3
-CAP_H = 8
+CAP_H = 7
 CAP_BOT = CAP_TOP + CAP_H
 # The strip always renders at 100% of the README column, so letter size is set
 # purely by how many grid units wide the viewBox is: more units means each unit
 # is fewer screen pixels, so the glyphs shrink. Raise TITLE_W to shrink them
 # further, lower it to grow them. At 460 the text occupies about 40% of the
 # width and the caps land near 22px on a ~880px column.
-TITLE_W = 380
+TITLE_W = 205
 TITLE_H = CAP_BOT + CAP_TOP
 
 # Smooth fire ramp, top to bottom. Unlike chrome type there is no hard break:

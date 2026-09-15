@@ -28,28 +28,27 @@ python3 test_build.py                       # 7 structural checks
 **Gradient text cannot be done with CSS here.** GitHub strips `<style>` blocks and
 `style` attributes from README markdown, so the gradient has to live inside an SVG.
 
-**The letterforms are hand-drawn pixels, not a font.** An SVG loaded through an `<img>`
-cannot fetch external fonts, so naming a typeface would only work for viewers who already
-have it installed. The glyphs are ASCII art in the `FONT` dict in `build.py` — a wide,
-short 17x8 box with 3px stems and 2px bars, ten of them, covering every distinct
-character in the title. Nothing to download, nothing to license, and the arcade look
-wants visible pixels anyway.
+**The letterforms are pixel art, not a font.** An SVG loaded through an `<img>` cannot
+fetch external fonts, so naming a typeface would only work for viewers who already have
+it installed. The glyphs live in the `FONT` dict in `build.py` — a 7x7 box with 2px
+strokes, ten of them, covering every distinct character in the title. Nothing to
+download, nothing to license, and the arcade look wants visible pixels anyway.
 
-Chamfered corners are what separate an arcade face from a plain blocky one. They are cut
-into the art on the corners that should have them. Deriving them programmatically, by
-removing every outer convex corner pixel, was tried first and failed badly: with thick
-stems it eats both ends of every stroke and every diagonal step, eroding the letters into
-fragments.
+They were transcribed from reference block art by **parsing it rather than retyping it**:
+blank columns split the glyphs, and the extraction was round-tripped back against the
+original before being committed. Hand-copying ten 7x7 grids is exactly where a silent
+one-pixel error gets in.
 
 **Tracking is solved for, not fixed.** `layout()` subtracts the glyph widths and the two
-fixed apostrophe gaps from `TITLE_W`, then shares the remainder out between the letter and
+fixed apostrophe gaps from `TITLE_W`, then shares the remainder between the letter and
 word gaps by `WORD_RATIO`, so the text spans the strip edge to edge and lines up with the
-beach above it. `APOS_PRE` puts a space between the `X` and the mark; `APOS_POST` is zero,
-so `'S` closes up.
+beach above it. The metrics were measured from the gaps in that same reference art —
+letter 11, word 16, six before the apostrophe, one after — and `WORD_RATIO = 1.45`
+reproduces them exactly at `TITLE_W = 205`.
 
-Letter size still comes from `TITLE_W` alone: the strip renders at 100% of the README
-column, so more grid units means each unit is fewer screen pixels and the glyphs shrink.
-Lower it to grow them.
+Letter size comes from `TITLE_W` alone: the strip renders at 100% of the README column,
+so more grid units means each unit is fewer screen pixels and the glyphs shrink. Lower it
+to grow them; the tracking re-solves either way.
 
 The **outline is an 8-connected dilation of the ink**, computed at build time, so it wraps
 the letterforms exactly. Stroking the SVG instead would outline every individual `<rect>`
